@@ -1,0 +1,6 @@
+{
+  "name": "IFS Chaos Game - Fractal Attractor Studio",
+  "description": "High-performance interactive Fractal Attractor and IFS Chaos Game Studio with real-time parameter tweaking, color gradients, animation morphing, custom equations, and high-res export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

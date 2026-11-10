@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFS Chaos Game - Fractal Attractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            min-width: 320px;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .canvas-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        canvas {
+            display: block;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .info h3 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .info p {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #ccc;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-legend {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stats {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .stats span {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌀 IFS Attractor - Chaos Game (Multi-Color)</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>α (Alpha)</label>
+                <div class="slider-container">
+                    <input type="range" id="alpha" min="-2" max="2" step="0.01" value="0">
+                    <span class="value-display" id="alphaValue">0.00</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>β (Beta)</label>
+                <div class="slider-container">
+                    <input type="range" id="beta" min="-2" max="2" step="0.01" value="0">
+                    <span class="value-display" id="betaValue">0.00</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Số điểm (Iterations)</label>
+                <div class="slider-container">
+                    <input type="range" id="iterations" min="10000" max="500000" step="10000" value="100000">
+                    <span class="value-display" id="iterationsValue">100000</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Kích thước điểm</label>
+                <div class="slider-container">
+                    <input type="range" id="pointSize" min="0.5" max="3" step="0.1" value="1">
+                    <span class="value-display" id="pointSizeValue">1.0</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Chế độ màu</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="colorMode" checked>
+                        <label for="colorMode">Tô màu theo hàm (f₁, f₂, f₃, f₄)</label>
+                    </div>
+                </div>
+            </div>
+
+            <button id="generateBtn">🎨 Tạo Attractor Mới</button>
+            <button id="clearBtn">🗑️ Xóa Canvas</button>
+
+            <div class="stats">
+                <p>Đã vẽ: <span id="pointCount">0</span> điểm</p>
+                <p>Thời gian: <span id="renderTime">0</span> ms</p>
+            </div>
+
+            <div class="color-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff3366;"></div>
+                    <span>f₁: đỏ hồng (màu nóng)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffcc00;"></div>
+                    <span>f₂: vàng cam</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff88;"></div>
+                    <span>f₃: xanh lá</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00d4ff;"></div>
+                    <span>f₄: xanh cyan</span>
+                </div>
+            </div>
+
+            <div class="info">
+                <h3>Hệ hàm IFS (đã sửa f₄):</h3>
+                <p>
+                    A = ½ × [[-1, -1], [0, 1]]<br>
+                    f₁(X) = A·X + [α; 0]<br>
+                    f₂(X) = A·X + [½; -½]<br>
+                    f₃(X) = A·X + [0; -½]<br>
+                    f₄(X) = -A·X + [½+β; -½]<br>
+                    <em>(-A = ½ × [[1, 1], [0, -1]])</em>
+                </p>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas" width="800" height="800"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Controls
+        const alphaSlider = document.getElementById('alpha');
+        const betaSlider = document.getElementById('beta');
+        const iterationsSlider = document.getElementById('iterations');
+        const pointSizeSlider = document.getElementById('pointSize');
+        const colorModeCheckbox = document.getElementById('colorMode');
+        
+        // Value displays
+        const alphaValue = document.getElementById('alphaValue');
+        const betaValue = document.getElementById('betaValue');
+        const iterationsValue = document.getElementById('iterationsValue');
+        const pointSizeValue = document.getElementById('pointSizeValue');
+        
+        // Stats
+        const pointCount = document.getElementById('pointCount');
+        const renderTime = document.getElementById('renderTime');
+        
+        // Buttons
+        const generateBtn = document.getElementById('generateBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        // Canvas parameters
+        const width = canvas.width;
+        const height = canvas.height;
+        const scale = 200;
+        const offsetX = width / 2;
+        const offsetY = height / 2;
+        
+        // ============================================================
+        // Màu sắc cho từng hàm (4 màu phân biệt rõ)
+        // ============================================================
+        const COLORS = {
+            f1: { r: 255, g: 51,  b: 102 }, // Đỏ hồng (f1)
+            f2: { r: 255, g: 204, b: 0   }, // Vàng cam (f2)
+            f3: { r: 0,   g: 255, b: 136 }, // Xanh lá (f3)
+            f4: { r: 0,   g: 212, b: 255 }  // Xanh cyan (f4)
+        };
+        
+        const MONO_COLOR = { r: 0, g: 212, b: 255 }; // Màu đơn sắc mặc định
+        
+        // ============================================================
+        // IFS Functions
+        // Ma trận A = 1/2 * [[-1, -1], [0, 1]]
+        // -A = 1/2 * [[1, 1], [0, -1]]
+        // ============================================================
+        
+        // f1(X) = A·X + [alpha; 0]
+        // = 1/2 * [[-1, -1], [0, 1]] * [x; y] + [alpha; 0]
+        // = [-(x+y)/2 + alpha; y/2]
+        function f1(x, y, alpha) {
+            return [
+                -(x + y) / 2 + alpha,
+                y / 2
+            ];
+        }
+        
+        // f2(X) = A·X + [1/2; -1/2]
+        // = [-(x+y)/2 + 1/2; y/2 - 1/2]
+        function f2(x, y) {
+            return [
+                -(x + y) / 2 + 0.5,
+                y / 2 - 0.5
+            ];
+        }
+        
+        // f3(X) = A·X + [0; -1/2]
+        // = [-(x+y)/2; y/2 - 1/2]
+        function f3(x, y) {
+            return [
+                -(x + y) / 2,
+                y / 2 - 0.5
+            ];
+        }
+        
+        // f4(X) = -A·X + [1/2 + beta; -1/2]   (ĐÃ SỬA: ma trận có dấu âm)
+        // -A = 1/2 * [[1, 1], [0, -1]]
+        // = [(x+y)/2 + 1/2 + beta; -y/2 - 1/2]
+        function f4(x, y, beta) {
+            return [
+                (x + y) / 2 + 0.5 + beta,
+                -y / 2 - 0.5    // ← DẤU ÂM ở thành phần y của ma trận
+            ];
+        }
+        
+        // Convert mathematical coordinates to canvas coordinates
+        function toCanvas(x, y) {
+            return [
+                offsetX + x * scale,
+                offsetY - y * scale
+            ];
+        }
+        
+        // Draw a pixel with specific color
+        function drawPixel(data, cx, cy, color, pointSize) {
+            if (cx >= 0 && cx < width && cy >= 0 && cy < height) {
+                const idx = (Math.floor(cy) * width + Math.floor(cx)) * 4;
+                data[idx] = color.r;
+                data[idx + 1] = color.g;
+                data[idx + 2] = color.b;
+                data[idx + 3] = 255;
+                
+                // Draw neighboring pixels for larger point size
+                if (pointSize > 1) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            const nx = Math.floor(cx) + dx;
+                            const ny = Math.floor(cy) + dy;
+                            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                const nidx = (ny * width + nx) * 4;
+                                data[nidx] = color.r;
+                                data[nidx + 1] = color.g;
+                                data[nidx + 2] = color.b;
+                                data[nidx + 3] = 255;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Generate attractor using Chaos Game
+        function generateAttractor() {
+            const startTime = performance.now();
+            
+            const alpha = parseFloat(alphaSlider.value);
+            const beta = parseFloat(betaSlider.value);
+            const iterations = parseInt(iterationsSlider.value);
+            const pointSize = parseFloat(pointSizeSlider.value);
+            const useColor = colorModeCheckbox.checked;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Start with random point
+            let x = Math.random() * 2 - 1;
+            let y = Math.random() * 2 - 1;
+            
+            // Skip first 20 iterations to reach attractor
+            for (let i = 0; i < 20; i++) {
+                const choice = Math.floor(Math.random() * 4);
+                if (choice === 0) [x, y] = f1(x, y, alpha);
+                else if (choice === 1) [x, y] = f2(x, y);
+                else if (choice === 2) [x, y] = f3(x, y);
+                else [x, y] = f4(x, y, beta);
+            }
+            
+            // Generate points
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < iterations; i++) {
+                const choice = Math.floor(Math.random() * 4);
+                
+                // Chọn màu theo hàm được áp dụng
+                let color;
+                if (useColor) {
+                    if (choice === 0) color = COLORS.f1;
+                    else if (choice === 1) color = COLORS.f2;
+                    else if (choice === 2) color = COLORS.f3;
+                    else color = COLORS.f4;
+                } else {
+                    color = MONO_COLOR;
+                }
+                
+                // Áp dụng hàm tương ứng
+                if (choice === 0) [x, y] = f1(x, y, alpha);
+                else if (choice === 1) [x, y] = f2(x, y);
+                else if (choice === 2) [x, y] = f3(x, y);
+                else [x, y] = f4(x, y, beta);
+                
+                // Convert to canvas coordinates
+                const [cx, cy] = toCanvas(x, y);
+                
+                // Draw point with selected color
+                drawPixel(data, cx, cy, color, pointSize);
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            const endTime = performance.now();
+            
+            // Update stats
+            pointCount.textContent = iterations.toLocaleString();
+            renderTime.textContent = Math.round(endTime - startTime);
+        }
+        
+        // Event listeners
+        alphaSlider.addEventListener('input', () => {
+            alphaValue.textContent = parseFloat(alphaSlider.value).toFixed(2);
+        });
+        
+        betaSlider.addEventListener('input', () => {
+            betaValue.textContent = parseFloat(betaSlider.value).toFixed(2);
+        });
+        
+        iterationsSlider.addEventListener('input', () => {
+            iterationsValue.textContent = parseInt(iterationsSlider.value).toLocaleString();
+        });
+        
+        pointSizeSlider.addEventListener('input', () => {
+            pointSizeValue.textContent = parseFloat(pointSizeSlider.value).toFixed(1);
+        });
+        
+        generateBtn.addEventListener('click', generateAttractor);
+        
+        clearBtn.addEventListener('click', () => {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            pointCount.textContent = '0';
+            renderTime.textContent = '0';
+        });
+        
+        // Auto-generate on slider change (with debounce)
+        let timeoutId;
+        function debounceGenerate() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(generateAttractor, 300);
+        }
+        
+        alphaSlider.addEventListener('change', debounceGenerate);
+        betaSlider.addEventListener('change', debounceGenerate);
+        iterationsSlider.addEventListener('change', debounceGenerate);
+        pointSizeSlider.addEventListener('change', debounceGenerate);
+        colorModeCheckbox.addEventListener('change', generateAttractor);
+        
+        // Initial generation
+        generateAttractor();
+    </script>
+</body>
+</html>
